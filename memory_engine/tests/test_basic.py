@@ -1,5 +1,14 @@
 import torch
-from memory_engine import TextEncoder, ShortTermMemory, LongTermMemory, ReadNet, ActionDecoder, DecisionInterface, Consolidator
+from memory_engine import (
+    TextEncoder,
+    ShortTermMemory,
+    LongTermMemory,
+    ReadNet,
+    ActionDecoder,
+    DecisionInterface,
+    Consolidator,
+    Cerebellum,
+)
 
 def test_pipeline():
     enc = TextEncoder()
@@ -67,3 +76,11 @@ def test_plan_path():
 
     path = decider.plan_path(s0, s2, stm, ltm)
     assert path == [(s1, 'go1'), (s2, 'go2')]
+
+
+def test_cerebellum_learns():
+    cb = Cerebellum(lr=0.5, momentum=0.0)
+    first = cb.act('jump', 1.0, 0.0)
+    assert cb.memory['jump']['strength'] == first
+    second = cb.act('jump', 1.0, 1.0)
+    assert abs(second - first) < 1e-6

@@ -34,3 +34,36 @@ def test_encoder_cache():
     assert size1 == 1
     assert size2 == 1
     assert torch.allclose(emb1, emb2)
+
+
+def test_ltm_attention():
+    state_dim = 2
+    stm = ShortTermMemory(state_dim)
+    ltm = LongTermMemory(state_dim)
+    readnet = ReadNet(state_dim)
+
+    query = torch.tensor([1.0, 0.0])
+    n1 = ltm.add_state(torch.tensor([1.0, 0.0]))
+    n2 = ltm.add_state(torch.tensor([0.0, 1.0]))
+    root = ltm.add_state(query)
+    ltm.add_transition(root, n1, 'a', 1.0)
+    ltm.add_transition(root, n2, 'b', 1.0)
+
+    msg = readnet.ltm_message(query, ltm)
+    assert msg[0] > msg[1]
+
+
+def test_plan_path():
+    dim = 2
+    stm = ShortTermMemory(dim)
+    ltm = LongTermMemory(dim)
+    decider = DecisionInterface()
+
+    s0 = stm.add_state(torch.zeros(dim))
+    s1 = stm.add_state(torch.ones(dim))
+    s2 = stm.add_state(torch.tensor([2.0, 0.0]))
+    stm.add_transition(s0, s1, 'go1')
+    stm.add_transition(s1, s2, 'go2')
+
+    path = decider.plan_path(s0, s2, stm, ltm)
+    assert path == [(s1, 'go1'), (s2, 'go2')]

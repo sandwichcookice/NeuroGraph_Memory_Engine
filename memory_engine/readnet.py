@@ -14,29 +14,30 @@ class ReadNet(nn.Module):
         )
 
     def stm_attention(self, x_t: torch.Tensor, stm: ShortTermMemory) -> torch.Tensor:
+        """計算 STM 注意力，採向量化方式提升效率。"""
         if not stm.graph:
             return torch.zeros_like(x_t)
-        weights = []
-        values = []
-        for _, dst, data in stm.graph.out_edges(stm.node_counter - 1, data=True):
-            dst_emb = stm.graph.nodes[dst]['emb']
-            score = torch.dot(x_t, dst_emb)
-            weights.append(score * data['weight'])
-            values.append(dst_emb)
-        if not weights:
+        edges = list(stm.graph.out_edges(stm.node_counter - 1, data=True))
+        if not edges:
             return torch.zeros_like(x_t)
-        w = F.softmax(torch.stack(weights), dim=0)
-        v = torch.stack(values)
-        return torch.sum(w.unsqueeze(1) * v, dim=0)
+        embs = torch.stack([stm.graph.nodes[v]['emb'] for _, v, _ in edges])
+        weights = torch.tensor([d['weight'] for _, _, d in edges], dtype=x_t.dtype)
+        scores = embs @ x_t
+        attn = F.softmax(scores * weights, dim=0)
+        return torch.sum(attn.unsqueeze(1) * embs, dim=0)
 
     def ltm_message(self, x_t: torch.Tensor, ltm: LongTermMemory) -> torch.Tensor:
+        """以動態注意力從 LTM 擷取訊息。"""
         if not ltm.graph:
             return torch.zeros_like(x_t)
-        agg = torch.zeros_like(x_t)
-        for _, dst, data in ltm.graph.out_edges(ltm.node_counter - 1, data=True):
-            dst_emb = ltm.graph.nodes[dst]['emb']
-            agg += data['weight'] * dst_emb
-        return agg
+        edges = list(ltm.graph.out_edges(ltm.node_counter - 1, data=True))
+        if not edges:
+            return torch.zeros_like(x_t)
+        embs = torch.stack([ltm.graph.nodes[v]['emb'] for _, v, _ in edges])
+        weights = torch.tensor([d['weight'] for _, _, d in edges], dtype=x_t.dtype)
+        scores = embs @ x_t
+        attn = F.softmax(scores * weights, dim=0)
+        return torch.sum(attn.unsqueeze(1) * embs, dim=0)
 
     def forward(self, x_t: torch.Tensor, stm: ShortTermMemory, ltm: LongTermMemory) -> torch.Tensor:
         r_s = self.stm_attention(x_t, stm)

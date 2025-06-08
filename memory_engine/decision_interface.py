@@ -22,12 +22,29 @@ class DecisionInterface:
         return g
 
     def next_action(self, current: int, goal: int, stm: ShortTermMemory, ltm: LongTermMemory):
+        path = self.plan_path(current, goal, stm, ltm)
+        if not path:
+            return None
+        return path[0][1]
+
+    def plan_path(self, current: int, goal: int, stm: ShortTermMemory, ltm: LongTermMemory):
+        """回傳從 current 到 goal 的行動路徑。
+
+        Returns a list of tuples ``(node, action)`` 表示依序經過的節點與採取的行動。
+        """
         g = self.build_graph(stm, ltm)
         try:
-            path = nx.shortest_path(g, source=current, target=goal, weight=lambda u,v,d: 1/d['weight'])
+            nodes = nx.shortest_path(
+                g,
+                source=current,
+                target=goal,
+                weight=lambda u, v, d: 1 / d['weight'],
+            )
         except nx.NetworkXNoPath:
             return None
-        if len(path) < 2:
-            return None
-        action = g[path[0]][path[1]]['action']
-        return action
+        path = []
+        for i in range(len(nodes) - 1):
+            u = nodes[i]
+            v = nodes[i + 1]
+            path.append((v, g[u][v]['action']))
+        return path

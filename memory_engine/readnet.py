@@ -41,5 +41,5 @@ class ReadNet(nn.Module):
     def forward(self, x_t: torch.Tensor, stm: ShortTermMemory, ltm: LongTermMemory) -> torch.Tensor:
         r_s = self.stm_attention(x_t, stm)
         r_l = self.ltm_message(x_t, ltm)
-        fused = torch.cat([x_t, r_s, r_l], dim=0)
-        return self.mlp(fused)
+        fused = torch.cat([x_t, r_s, r_l], dim=0).unsqueeze(0)
+        return self.mlp(fused).squeeze(0)

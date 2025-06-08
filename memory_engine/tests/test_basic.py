@@ -23,3 +23,14 @@ def test_pipeline():
     consolidator.run(stm, ltm)
     action = decider.next_action(s1, s2, stm, ltm)
     assert action == 'forward'
+
+
+def test_encoder_cache():
+    enc = TextEncoder()
+    emb1 = enc('hello world')
+    size1 = len(enc.cache)
+    emb2 = enc('hello world')
+    size2 = len(enc.cache)
+    assert size1 == 1
+    assert size2 == 1
+    assert torch.allclose(emb1, emb2)

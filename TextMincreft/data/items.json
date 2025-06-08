@@ -1,0 +1,16 @@
+{
+  "木頭": { "obtain": ["explore", "break"], "breakTool": "手" },
+  "鵝卵石": { "obtain": ["explore", "break"], "breakTool": "木鎬" },
+  "煤炭": { "obtain": ["explore", "break"], "breakTool": "木鎬" },
+  "鐵礦石": { "obtain": ["explore", "break"], "breakTool": "石鎬" },
+  "鑽石": { "obtain": ["explore", "break"], "breakTool": "鐵鎬" },
+  "木材": { "craft": { "needs": { "木頭": 1 }, "gives": { "木材": 4 }, "goal": 4 } },
+  "木棒": { "craft": { "needs": { "木材": 2 }, "gives": { "木棒": 4 } } },
+  "工作台": { "craft": { "needs": { "木材": 4 }, "gives": { "工作台": 1 } } },
+  "木鎬": { "craft": { "needs": { "木棒": 2, "木材": 3 }, "gives": { "木鎬": 1 } }, "station": "工作台" },
+  "石鎬": { "craft": { "needs": { "木棒": 2, "鵝卵石": 3 }, "gives": { "石鎬": 1 } }, "station": "工作台" },
+  "熔爐": { "craft": { "needs": { "鵝卵石": 8 }, "gives": { "熔爐": 1 } }, "station": "工作台" },
+  "鐵錠": { "craft": { "needs": { "鐵礦石": 1, "煤炭": 1 }, "gives": { "鐵錠": 1 } }, "station": "熔爐" },
+  "鐵鎬": { "craft": { "needs": { "木棒": 2, "鐵錠": 3 }, "gives": { "鐵鎬": 1 } }, "station": "工作台" },
+  "鑽石鎬": { "craft": { "needs": { "木棒": 2, "鑽石": 3 }, "gives": { "鑽石鎬": 1 } }, "station": "工作台" }
+}

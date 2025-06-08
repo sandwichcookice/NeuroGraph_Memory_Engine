@@ -9,9 +9,9 @@ class LongTermMemory(MemoryGraph):
     def consolidate(self, stm: "ShortTermMemory", beta: float = 0.1):
         for u, v, data in stm.graph.edges(data=True):
             if not self.graph.has_node(u):
-                self.graph.add_node(u, emb=stm.graph.nodes[u]['emb'])
+                self.graph.add_node(u, emb=stm.graph.nodes[u]['emb'], age=0)
             if not self.graph.has_node(v):
-                self.graph.add_node(v, emb=stm.graph.nodes[v]['emb'])
+                self.graph.add_node(v, emb=stm.graph.nodes[v]['emb'], age=0)
             weight = beta * data['weight']
             if self.graph.has_edge(u, v):
                 self.graph[u][v]['weight'] += weight

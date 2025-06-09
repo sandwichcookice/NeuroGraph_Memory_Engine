@@ -48,3 +48,9 @@ class Cerebellum:
     def load(self, data: dict):
         """載入既有的小腦記憶。"""
         self.memory = {k: {"strength": float(v.get("strength", self.default_strength)), "velocity": float(v.get("velocity", 0.0))} for k, v in data.items()}
+
+    def best_action(self) -> str:
+        """回傳強度最高的動作，若無紀錄則隨機選擇。"""
+        if not self.memory:
+            return "探索"
+        return max(self.memory.items(), key=lambda kv: kv[1]["strength"])[0]

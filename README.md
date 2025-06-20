@@ -7,6 +7,7 @@
 ## 主要模組
 - **TextEncoder**：將文字轉為向量表示。
 - **ShortTermMemory / LongTermMemory**：記錄與統整狀態轉移。
+  - STM 內含 L/R/C 三類連結強度，可透過 `stm.visualize('out.png')` 產生圖像檢視。
 - **ReadNet**：從 STM/LTM 擷取相關資訊。
 - **ActionDecoder**：根據融合後的狀態產生行為 logits。
 - **DecisionInterface**：綜合 STM 與 LTM 決策路徑。
@@ -29,6 +30,7 @@
 4. 小腦會依據回饋調整各指令的權重，使探索策略逐步收斂至可
    成功取得鑽石鎬的流程。
 5. LTM 會定期寫入 `ltm_snapshot.pkl`，以便下次訓練可延續先前狀態。
+6. 程式每十步會呼叫 `stm.visualize()` 輸出 `stm_step_<N>.png`，方便觀察記憶連結。
 
 ## 執行測試
 ```

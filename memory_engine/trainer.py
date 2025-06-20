@@ -53,6 +53,7 @@ current_action = None
 inventory_snapshot = {}
 step_counter = 0
 sleep_cycle = 20
+visual_cycle = 10  # 每隔此步數輸出一次 STM 圖像
 epsilon = 0.2
 
 # 根據記憶圖與小腦參數選擇下一步行動
@@ -86,17 +87,26 @@ def main():
         inv = payload.get('inventory', {})
         response = payload.get('response', '')
 
-        emb = encoder(json.dumps(inv))
-        node = stm.add_state(emb)
+        raw = json.dumps(inv)
+        emb = encoder(raw)
+        node = stm.add_state(emb, context_id=0, text=raw)
+        reward = 1.0 if inv != inventory_snapshot else 0.0
         if current_state is not None and current_action is not None:
-            stm.add_transition(current_state, node, current_action)
+            stm.add_transition(current_state, node, current_action, reward)
         current_state = node
 
-        reward = 1.0 if inv != inventory_snapshot else 0.0
         cerebellum.act(current_action, 1.0, reward)
         inventory_snapshot = inv
 
         step_counter += 1
+        # 週期性輸出 STM 圖像，以供驗證
+        if step_counter % visual_cycle == 0:
+            try:
+                out_path = f"stm_step_{step_counter}.png"
+                stm.visualize(out_path)
+            except Exception as e:
+                print(f"visualize error: {e}", file=sys.stderr)
+
         if step_counter % sleep_cycle == 0:
             consolidator.run(stm, ltm)
 

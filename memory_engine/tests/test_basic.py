@@ -1,4 +1,7 @@
+import os
+import sys
 import torch
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from memory_engine import (
     TextEncoder,
     ShortTermMemory,
@@ -84,3 +87,13 @@ def test_cerebellum_learns():
     assert cb.memory['jump']['strength'] == first
     second = cb.act('jump', 1.0, 1.0)
     assert abs(second - first) < 1e-6
+
+
+def test_stm_visualize(tmp_path):
+    stm = ShortTermMemory(embedding_dim=2)
+    n1 = stm.add_state(torch.zeros(2))
+    n2 = stm.add_state(torch.ones(2))
+    stm.add_transition(n1, n2, 'go', reward=1.0)
+    out = tmp_path / 'stm.png'
+    stm.visualize(str(out))
+    assert out.exists()

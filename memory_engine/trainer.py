@@ -24,8 +24,8 @@ if os.path.exists(SNAPSHOT_PATH):
         ltm = pickle.load(f)
 else:
     ltm = LongTermMemory(embed_dim)
-readnet  = ReadNet()
-decider  = DecisionInterface(readnet, stm, ltm)
+readnet  = ReadNet(state_dim=128)
+decider  = DecisionInterface(readnet)
 decoder = ActionDecoder(state_dim=128, hidden_dim=64, num_actions=1)
 consolidator = Consolidator()
 cerebellum = Cerebellum()

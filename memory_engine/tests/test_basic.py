@@ -1,5 +1,5 @@
 import torch
-from memory_engine import TextEncoder, ShortTermMemory, LongTermMemory, ReadNet, ActionDecoder, DecisionInterface, Consolidator
+from memory_engine import TextEncoder, ShortTermMemory, LongTermMemory, ReadNet, ActionDecoder, DecisionInterface, Consolidator, AttentionScheduler
 
 def test_pipeline():
     enc = TextEncoder()
@@ -67,3 +67,11 @@ def test_plan_path():
 
     path = decider.plan_path(s0, s2, stm, ltm)
     assert path == [(s1, 'go1'), (s2, 'go2')]
+
+def test_attention_scheduler():
+    dim = 4
+    scheduler = AttentionScheduler(state_dim=dim)
+    state = torch.ones(dim)
+    units = torch.stack([torch.ones(dim), torch.zeros(dim)])
+    output, idx = scheduler(state, units)
+    assert idx == 0

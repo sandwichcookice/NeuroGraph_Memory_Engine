@@ -1,5 +1,8 @@
+import logging
 import torch
 import torch.nn as nn
+
+logger = logging.getLogger(__name__)
 
 class ActionDecoder(nn.Module):
     def __init__(self, state_dim: int, hidden_dim: int, num_actions: int):
@@ -11,4 +14,8 @@ class ActionDecoder(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
+        try:
+            return self.net(x)
+        except Exception as e:
+            logger.exception("動作解碼失敗: %s", e)
+            raise

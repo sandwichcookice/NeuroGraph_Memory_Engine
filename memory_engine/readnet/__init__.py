@@ -1,8 +1,11 @@
+import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .stm import ShortTermMemory
-from .ltm import LongTermMemory
+from ..stm import ShortTermMemory
+from ..ltm import LongTermMemory
+
+logger = logging.getLogger(__name__)
 
 class ReadNet(nn.Module):
     def __init__(self, state_dim: int, hidden_dim: int = 128):
@@ -40,7 +43,11 @@ class ReadNet(nn.Module):
         return torch.sum(attn.unsqueeze(1) * embs, dim=0)
 
     def forward(self, x_t: torch.Tensor, stm: ShortTermMemory, ltm: LongTermMemory) -> torch.Tensor:
-        r_s = self.stm_attention(x_t, stm)
-        r_l = self.ltm_message(x_t, ltm)
-        fused = torch.cat([x_t, r_s, r_l], dim=0).unsqueeze(0)
-        return self.mlp(fused).squeeze(0)
+        try:
+            r_s = self.stm_attention(x_t, stm)
+            r_l = self.ltm_message(x_t, ltm)
+            fused = torch.cat([x_t, r_s, r_l], dim=0).unsqueeze(0)
+            return self.mlp(fused).squeeze(0)
+        except Exception as e:
+            logger.exception("讀取網路失敗: %s", e)
+            raise

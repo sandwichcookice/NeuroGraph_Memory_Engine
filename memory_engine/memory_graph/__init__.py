@@ -1,6 +1,9 @@
+import logging
 import networkx as nx
 import torch
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Transition:
@@ -15,20 +18,30 @@ class MemoryGraph:
 
     def add_state(self, embedding: torch.Tensor) -> int:
         """新增狀態節點並記錄其年齡，避免新節點被過早刪除。"""
+        if embedding.shape[-1] != self.embedding_dim:
+            raise ValueError("embedding dim mismatch")
         node_id = self.node_counter
-        self.graph.add_node(
-            node_id,
-            emb=embedding.detach().clone(),
-            age=0,
-        )
+        try:
+            self.graph.add_node(
+                node_id,
+                emb=embedding.detach().clone(),
+                age=0,
+            )
+        except Exception as e:
+            logger.exception("新增節點失敗: %s", e)
+            raise
         self.node_counter += 1
         return node_id
 
     def add_transition(self, src: int, dst: int, action: str, weight: float):
-        if self.graph.has_edge(src, dst):
-            self.graph[src][dst]['weight'] += weight
-        else:
-            self.graph.add_edge(src, dst, action=action, weight=weight)
+        try:
+            if self.graph.has_edge(src, dst):
+                self.graph[src][dst]['weight'] += weight
+            else:
+                self.graph.add_edge(src, dst, action=action, weight=weight)
+        except Exception as e:
+            logger.exception("新增邊失敗: %s", e)
+            raise
 
     def decay(self, gamma: float, threshold: float):
         """對邊權重衰減並移除舊的孤立節點。"""

@@ -1,5 +1,17 @@
+import os
+import sys
 import torch
-from memory_engine import TextEncoder, ShortTermMemory, LongTermMemory, ReadNet, ActionDecoder, DecisionInterface, Consolidator
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from memory_engine import (
+    TextEncoder,
+    ShortTermMemory,
+    LongTermMemory,
+    ReadNet,
+    ActionDecoder,
+    DecisionInterface,
+    Consolidator,
+    Cerebellum,
+)
 
 def test_pipeline():
     enc = TextEncoder()
@@ -67,3 +79,21 @@ def test_plan_path():
 
     path = decider.plan_path(s0, s2, stm, ltm)
     assert path == [(s1, 'go1'), (s2, 'go2')]
+
+
+def test_cerebellum_learns():
+    cb = Cerebellum(lr=0.5, momentum=0.0)
+    first = cb.act('jump', 1.0, 0.0)
+    assert cb.memory['jump']['strength'] == first
+    second = cb.act('jump', 1.0, 1.0)
+    assert abs(second - first) < 1e-6
+
+
+def test_stm_visualize(tmp_path):
+    stm = ShortTermMemory(embedding_dim=2)
+    n1 = stm.add_state(torch.zeros(2))
+    n2 = stm.add_state(torch.ones(2))
+    stm.add_transition(n1, n2, 'go', reward=1.0)
+    out = tmp_path / 'stm.png'
+    stm.visualize(str(out))
+    assert out.exists()

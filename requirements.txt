@@ -1,3 +1,4 @@
 torch
 networkx
 matplotlib
+scikit-learn

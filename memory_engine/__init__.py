@@ -1,6 +1,7 @@
 from .encoder import TextEncoder
 from .stm import ShortTermMemory
 from .ltm import LongTermMemory
+from .ltm_gnn import GNNLongTermMemory
 from .decision import ReadNet, DecisionInterface
 from .decoder import ActionDecoder
 from .consolidator import Consolidator
@@ -15,4 +16,5 @@ __all__ = [
     'DecisionInterface',
     'Consolidator',
     'Cerebellum',
+    'GNNLongTermMemory',
 ]

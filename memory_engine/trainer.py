@@ -6,7 +6,7 @@ import pickle
 from memory_engine import (
     TextEncoder,
     ShortTermMemory,
-    LongTermMemory,
+    GNNLongTermMemory,
     ActionDecoder,
     Consolidator,
     Cerebellum,
@@ -22,8 +22,10 @@ embed_dim = 128
 if os.path.exists(SNAPSHOT_PATH):
     with open(SNAPSHOT_PATH, "rb") as f:
         ltm = pickle.load(f)
+        if not isinstance(ltm, GNNLongTermMemory):
+            ltm = GNNLongTermMemory(embed_dim)
 else:
-    ltm = LongTermMemory(embed_dim)
+    ltm = GNNLongTermMemory(embed_dim)
 readnet  = ReadNet(state_dim=128)
 decider  = DecisionInterface(readnet)
 decoder = ActionDecoder(state_dim=128, hidden_dim=64, num_actions=1)
@@ -56,14 +58,29 @@ sleep_cycle = 20
 visual_cycle = 10  # 每隔此步數輸出一次 STM 圖像
 epsilon = 0.2
 
+# 將可微邊權重同步回圖結構，供路徑規劃使用
+def sync_ltm_weights():
+    for key, param in ltm.edge_params.items():
+        try:
+            src, dst = map(int, key.split("->"))
+            if ltm.graph.has_edge(src, dst):
+                ltm.graph[src][dst]["weight"] = float(param.item())
+        except Exception as e:  # pragma: no cover - 防止解析失敗
+            print(f"sync error: {e}", file=sys.stderr)
+
 # 根據記憶圖與小腦參數選擇下一步行動
 def choose_action(state_repr: int):
     """
     優先使用記憶圖規劃路徑；若無路徑，再 fallback 到 ε-greedy + Cerebellum。
     """
+    sync_ltm_weights()
     goal_node = ltm.find_goal("鑽石鎬")
     if goal_node:
-        path = decider.plan_path(state_repr, goal_node)
+        try:
+            path = decider.plan_path(state_repr, goal_node)
+        except Exception as e:  # pragma: no cover - 防止路徑規劃失敗
+            print(f"plan error: {e}", file=sys.stderr)
+            path = None
         if path:
             return path[0][1]
     if random.random() < epsilon:
@@ -129,5 +146,8 @@ if __name__ == "__main__":
         main()
     finally:
         if ltm is not None:
-            with open(SNAPSHOT_PATH, "wb") as f:
-                pickle.dump(ltm, f)
+            try:
+                with open(SNAPSHOT_PATH, "wb") as f:
+                    pickle.dump(ltm, f)
+            except Exception as e:
+                print(f"save error: {e}", file=sys.stderr)

@@ -22,3 +22,9 @@
 - 調整 trainer.py 以傳入獎勵並記錄原始文字。
 - 測試新增 STM 視覺化案例與安裝 matplotlib。
 - trainer.py 週期性輸出 STM 圖像以協助驗證。
+- 新增 GNNLongTermMemory 模組與測試，更新 README 介紹。
+- trainer.py 改用 GNNLongTermMemory，整合 Consolidator 與測試覆蓋。
+- 新增 `ltm_visualizer.py` 提供 t-SNE 與邊權重熱圖等可視化功能。
+- README 增補 4.1 可視化檢查方案說明。
+- requirements.txt 加入 scikit-learn 以支援降維。
+- 改進 GNNLongTermMemory.train_offline 以完整損失計算與正則化支援。

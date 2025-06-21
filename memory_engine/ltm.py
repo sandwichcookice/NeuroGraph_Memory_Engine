@@ -20,3 +20,10 @@ class LongTermMemory(MemoryGraph):
 
     def decay_and_prune(self):
         super().decay(self.gamma, self.threshold)
+
+    def find_goal(self, item: str):
+        """回傳包含指定物品的節點編號。若不存在則回傳 None。"""
+        for n, d in self.graph.nodes(data=True):
+            if d.get("goal") == item:
+                return n
+        return None

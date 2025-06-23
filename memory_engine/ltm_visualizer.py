@@ -3,6 +3,10 @@
 提供 t-SNE 降維、邊權重熱圖與路徑梯度分析等功能，
 協助檢查 GNNLongTermMemory 的訓練狀態。"""
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import argparse
 import logging
 import os
@@ -14,7 +18,7 @@ import networkx as nx
 import torch
 from sklearn.manifold import TSNE
 
-from .ltm_gnn import GNNLongTermMemory
+from memory_engine.ltm_gnn import GNNLongTermMemory
 
 logging.basicConfig(level=logging.INFO)
 

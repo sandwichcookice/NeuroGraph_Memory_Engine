@@ -31,4 +31,5 @@
 - Consolidator 於睡眠階段同步訓練 GNN 長期記憶，模擬人類睡眠鞏固流程。
 - train_offline 新增 TensorBoard 與進度條，訓練紀錄更易觀察。
 - trainer.py 在初始化時預載通關攻略到 STM，所有連結權重與獎勵皆為最高。
+- 預載流程改為動作與觀察皆建立節點，強化記憶圖語意。
 - requirements.txt 新增 tqdm。

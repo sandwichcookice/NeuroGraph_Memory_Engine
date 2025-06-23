@@ -36,35 +36,45 @@ cerebellum = Cerebellum()
 # ---------------------------------------------------------------------------
 # 預載通關攻略到 STM，初始化連結強度與獎勵皆為最高。
 def preload_walkthrough() -> None:
-    """建立從起點到取得鑽石鎬的基本流程。"""
+    """建立從起點到取得鑽石鎬的基本流程，動作與觀察皆視為節點。"""
 
-    steps = [
-        '探索',
-        '破壞方塊,手',
-        '合成,木材',
-        '合成,木棒',
-        '合成,工作台',
-        '合成,木鎬',
-        '破壞方塊,木鎬',
-        '合成,石鎬',
-        '破壞方塊,石鎬',
-        '合成,熔爐',
-        '合成,鐵錠',
-        '合成,鐵鎬',
-        '破壞方塊,鐵鎬',
-        '合成,鑽石鎬',
+    pairs = [
+        ('探索', '發現木材'),
+        ('破壞方塊,手', '取得木材'),
+        ('合成,木材', '取得木板'),
+        ('合成,木棒', '取得木棒'),
+        ('合成,工作台', '取得工作台'),
+        ('合成,木鎬', '取得木鎬'),
+        ('破壞方塊,木鎬', '取得石頭'),
+        ('合成,石鎬', '取得石鎬'),
+        ('破壞方塊,石鎬', '取得鐵礦'),
+        ('合成,熔爐', '取得熔爐'),
+        ('合成,鐵錠', '取得鐵錠'),
+        ('合成,鐵鎬', '取得鐵鎬'),
+        ('破壞方塊,鐵鎬', '取得鑽石'),
+        ('合成,鑽石鎬', '取得鑽石鎬'),
     ]
 
-    prev = stm.add_state(torch.randn(embed_dim), context_id=0, text='start')
-    for i, act in enumerate(steps, 1):
-        nxt = stm.add_state(torch.randn(embed_dim), context_id=0, text=f'step{i}')
-        stm.add_transition(prev, nxt, act, reward=1.0)
-        edge = stm.graph[prev][nxt]
-        edge['L'] = 1.0
-        edge['R'] = 1.0
-        edge['C'] = 1.0
-        edge['weight'] = 3.0
-        prev = nxt
+    prev = stm.add_state(torch.randn(embed_dim), context_id=0, text='開始')
+    for act, obs in pairs:
+        # 動作節點
+        act_node = stm.add_state(torch.randn(embed_dim), context_id=0, text=act)
+        stm.add_transition(prev, act_node, act, reward=1.0)
+        e1 = stm.graph[prev][act_node]
+        e1['L'] = 1.0
+        e1['R'] = 1.0
+        e1['C'] = 1.0
+        e1['weight'] = 3.0
+
+        # 觀察節點
+        obs_node = stm.add_state(torch.randn(embed_dim), context_id=0, text=obs)
+        stm.add_transition(act_node, obs_node, f'觀察:{obs}', reward=1.0)
+        e2 = stm.graph[act_node][obs_node]
+        e2['L'] = 1.0
+        e2['R'] = 1.0
+        e2['C'] = 1.0
+        e2['weight'] = 3.0
+        prev = obs_node
 
     stm.graph.nodes[prev]['goal'] = '鑽石鎬'
 

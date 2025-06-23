@@ -34,7 +34,7 @@
 6. 長期記憶模組已更新為 `GNNLongTermMemory`，整合時會先轉移 STM，再於睡眠階段執行離線訓練以更新參數。
 7. 程式每十步會呼叫 `stm.visualize()` 輸出 `stm_step_<N>.png`，方便觀察記憶連結。
 8. `GNNLongTermMemory.train_offline` 會將訓練損失寫入 TensorBoard，並於終端顯示進度條。可執行 `tensorboard --logdir logs` 追蹤訓練狀況。
-9. `trainer.py` 初始化時會將取得鑽石鎬的完整步驟預先寫入 STM，權重與獎勵皆設為最高值，加速學習收斂。
+9. `trainer.py` 初始化時預載一條以「動作 / 觀察」交替的流程至 STM，權重與獎勵皆為最高值，加速收斂。
 
 ## 執行測試
 ```

@@ -2,3 +2,5 @@ torch
 networkx
 matplotlib
 scikit-learn
+tqdm
+tensorboard

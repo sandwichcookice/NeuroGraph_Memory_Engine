@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import networkx as nx
 from typing import Iterable, Tuple
+import sys
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 class GNNLongTermMemory(nn.Module):
     """具備可微分結構的長期記憶模組。"""
@@ -82,55 +85,73 @@ class GNNLongTermMemory(nn.Module):
         lr: float = 1e-3,
         lambda_sim: float = 0.05,
         lambda_reg: float = 1e-4,
+        log_dir: str | None = None,
     ) -> float:
-        """完整的離線訓練流程。
+        """完整的離線訓練流程，支援 TensorBoard 與進度條。
 
         參數 ``samples`` 為 ``(state, action, next_state, reward)`` 四元組
         的可疊代序列。此函式會依序計算任務損失、語意相似度損失與正則化，
         並使用 AdamW 更新 ``Kᵢ`` 與 ``Wᵢⱼ``。
+        若指定 ``log_dir``，會輸出 TensorBoard 記錄；同時於訓練時顯示進度條。
         """
 
         opt = torch.optim.AdamW(self.parameters(), lr=lr)
         last_loss = 0.0
+        writer = SummaryWriter(log_dir=log_dir) if log_dir else None
+        samples = list(samples)
 
-        for _ in range(epochs):
-            total = 0.0
-            count = 0
-            for s, _a, sp, r in samples:
-                try:
-                    q_vals = self.forward([s, sp])
-                except Exception as exc:  # pragma: no cover - 無效樣本
-                    print(f"train skip: {exc}", file=sys.stderr)
-                    continue
+        try:
+            for epoch in range(epochs):
+                total = 0.0
+                count = 0
+                for s, _a, sp, r in tqdm(samples, desc=f"epoch {epoch+1}", leave=False):
+                    try:
+                        q_vals = self.forward([s, sp])
+                    except Exception as exc:  # pragma: no cover - 無效樣本
+                        print(f"train skip: {exc}", file=sys.stderr)
+                        continue
 
-                # 任務損失：回歸目標 Q 值
-                target = torch.tensor([0.0, r], dtype=q_vals.dtype)
-                loss_task = nn.functional.mse_loss(q_vals, target)
+                    # 任務損失：回歸目標 Q 值
+                    target = torch.tensor([0.0, r], dtype=q_vals.dtype)
+                    loss_task = nn.functional.mse_loss(q_vals, target)
 
-                # 語意相近損失：正獎勵時強化相似度
-                loss_sim = torch.tensor(0.0)
-                if r > 0:
-                    emb_s = self.node_params.get(str(s))
-                    emb_sp = self.node_params.get(str(sp))
-                    if emb_s is not None and emb_sp is not None:
-                        cos = nn.functional.cosine_similarity(emb_s, emb_sp, dim=0)
-                        loss_sim = 1 - cos
+                    # 語意相近損失：正獎勵時強化相似度
+                    loss_sim = torch.tensor(0.0)
+                    if r > 0:
+                        emb_s = self.node_params.get(str(s))
+                        emb_sp = self.node_params.get(str(sp))
+                        if emb_s is not None and emb_sp is not None:
+                            cos = nn.functional.cosine_similarity(emb_s, emb_sp, dim=0)
+                            loss_sim = 1 - cos
 
-                # 正則化項：參數 L2
-                loss_reg = sum(p.pow(2).mean() for p in self.parameters())
+                    # 正則化項：參數 L2
+                    loss_reg = sum(p.pow(2).mean() for p in self.parameters())
 
-                loss = loss_task + lambda_sim * loss_sim + lambda_reg * loss_reg
+                    loss = loss_task + lambda_sim * loss_sim + lambda_reg * loss_reg
 
-                opt.zero_grad()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
-                opt.step()
+                    opt.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
+                    opt.step()
 
-                total += float(loss.item())
-                count += 1
+                    total += float(loss.item())
+                    count += 1
 
-            if count:
-                last_loss = total / count
+                    if writer is not None:
+                        writer.add_scalar(
+                            "iter_loss",
+                            float(loss.item()),
+                            epoch * len(samples) + count,
+                        )
+
+                if count:
+                    last_loss = total / count
+                    if writer is not None:
+                        writer.add_scalar("epoch_loss", last_loss, epoch)
+
+        finally:
+            if writer is not None:
+                writer.close()
 
         return last_loss
 

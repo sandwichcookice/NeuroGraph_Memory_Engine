@@ -3,6 +3,7 @@ import random
 import sys
 import os
 import pickle
+import torch
 from memory_engine import (
     TextEncoder,
     ShortTermMemory,
@@ -31,6 +32,43 @@ decider  = DecisionInterface(readnet)
 decoder = ActionDecoder(state_dim=128, hidden_dim=64, num_actions=1)
 consolidator = Consolidator()
 cerebellum = Cerebellum()
+
+# ---------------------------------------------------------------------------
+# 預載通關攻略到 STM，初始化連結強度與獎勵皆為最高。
+def preload_walkthrough() -> None:
+    """建立從起點到取得鑽石鎬的基本流程。"""
+
+    steps = [
+        '探索',
+        '破壞方塊,手',
+        '合成,木材',
+        '合成,木棒',
+        '合成,工作台',
+        '合成,木鎬',
+        '破壞方塊,木鎬',
+        '合成,石鎬',
+        '破壞方塊,石鎬',
+        '合成,熔爐',
+        '合成,鐵錠',
+        '合成,鐵鎬',
+        '破壞方塊,鐵鎬',
+        '合成,鑽石鎬',
+    ]
+
+    prev = stm.add_state(torch.randn(embed_dim), context_id=0, text='start')
+    for i, act in enumerate(steps, 1):
+        nxt = stm.add_state(torch.randn(embed_dim), context_id=0, text=f'step{i}')
+        stm.add_transition(prev, nxt, act, reward=1.0)
+        edge = stm.graph[prev][nxt]
+        edge['L'] = 1.0
+        edge['R'] = 1.0
+        edge['C'] = 1.0
+        edge['weight'] = 3.0
+        prev = nxt
+
+    stm.graph.nodes[prev]['goal'] = '鑽石鎬'
+
+preload_walkthrough()
 
 # 可選指令集合
 ACTIONS = [

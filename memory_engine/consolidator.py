@@ -19,14 +19,26 @@ class Consolidator:
 
     def _run_gnn(self, stm: ShortTermMemory, ltm: GNNLongTermMemory):
         """將 STM 內容整合進 GNN LTM。"""
+        samples = []
+        # 將 STM 節點與邊複製到 LTM，同時收集訓練樣本
         for n, d in stm.graph.nodes(data=True):
             if not ltm.graph.has_node(n):
-                ltm.add_state(d['emb'], node_id=n)
+                ltm.add_state(d["emb"], node_id=n)
         for u, v, data in stm.graph.edges(data=True):
-            ltm.add_edge(u, v, data.get('action', ''))
+            ltm.add_edge(u, v, data.get("action", ""))
             key = f"{u}->{v}"
             w = ltm.edge_params[key]
-            w.data += self.beta * torch.tensor(data.get('weight', 1.0))
-            ltm.graph[u][v]['weight'] = float(w.item())
+            w.data += self.beta * torch.tensor(data.get("weight", 1.0))
+            ltm.graph[u][v]["weight"] = float(w.item())
+            samples.append((u, data.get("action", ""), v, float(data.get("R", 0.0))))
+
+        # 進行離線訓練，模擬睡眠時期的鞏固
+        if samples:
+            try:
+                ltm.train_offline(samples)
+            except Exception as e:  # pragma: no cover - 防止訓練失敗
+                import sys
+                print(f"offline train error: {e}", file=sys.stderr)
+
         stm.decay_and_prune()
         ltm.decay_and_prune(self.gamma, self.threshold)

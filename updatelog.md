@@ -28,3 +28,4 @@
 - README 增補 4.1 可視化檢查方案說明。
 - requirements.txt 加入 scikit-learn 以支援降維。
 - 改進 GNNLongTermMemory.train_offline 以完整損失計算與正則化支援。
+- Consolidator 於睡眠階段同步訓練 GNN 長期記憶，模擬人類睡眠鞏固流程。

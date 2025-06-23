@@ -22,5 +22,9 @@ def test_consolidator_with_gnn():
     n0 = stm.add_state(torch.zeros(2))
     n1 = stm.add_state(torch.ones(2))
     stm.add_transition(n0, n1, 'go', reward=1.0)
+    before = gnn.edge_params.get(f"{n0}->{n1}")
     cons.run(stm, gnn)
     assert gnn.graph.has_edge(n0, n1)
+    after = gnn.edge_params[f"{n0}->{n1}"]
+    if before is not None:
+        assert after != before

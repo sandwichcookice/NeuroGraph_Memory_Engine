@@ -109,8 +109,8 @@ current_state = None
 current_action = None
 inventory_snapshot = {}
 step_counter = 0
-sleep_cycle = 20
-visual_cycle = 10  # 每隔此步數輸出一次 STM 圖像
+sleep_cycle = 100
+visual_cycle = 100  # 每隔此步數輸出一次 STM 圖像
 epsilon = 0.2
 
 # 將可微邊權重同步回圖結構，供路徑規劃使用

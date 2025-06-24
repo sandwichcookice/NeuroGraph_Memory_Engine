@@ -11,6 +11,7 @@ class Consolidator:
 
     def run(self, stm: ShortTermMemory, ltm: LongTermMemory | GNNLongTermMemory):
         if isinstance(ltm, GNNLongTermMemory):
+            print('開始睡眠')
             self._run_gnn(stm, ltm)
         else:
             ltm.consolidate(stm, self.beta)

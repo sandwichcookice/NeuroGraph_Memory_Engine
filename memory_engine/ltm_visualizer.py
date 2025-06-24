@@ -11,6 +11,7 @@ from typing import Iterable
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import torch
 from sklearn.manifold import TSNE
 
@@ -48,15 +49,17 @@ def _visualize_nodes(ltm: GNNLongTermMemory, out_path: str) -> None:
         logging.warning("無節點可視化")
         return
     tsne = TSNE(n_components=2, init="pca", random_state=42)
-    coords = tsne.fit_transform(embeddings)
-    plt.figure(figsize=(6, 6))
+    coords = tsne.fit_transform(np.array(embeddings))
+    plt.figure(figsize=(14, 12))  # 放大圖像
     unique = sorted(set(labels))
     for t in unique:
         idx = [i for i, l in enumerate(labels) if l == t]
-        plt.scatter(coords[idx, 0], coords[idx, 1], label=t)
-    plt.legend()
+        plt.scatter(coords[idx, 0], coords[idx, 1], label=t, s=120)  # 放大點
+    plt.xlabel("t-SNE X", fontsize=16)
+    plt.ylabel("t-SNE Y", fontsize=16)
+    plt.legend(fontsize=16)
     plt.tight_layout()
-    plt.savefig(out_path)
+    plt.savefig(out_path, dpi=200)  # 提高解析度
     plt.close()
     logging.info("節點分佈圖已輸出至 %s", out_path)
 
@@ -67,12 +70,12 @@ def _visualize_edges(ltm: GNNLongTermMemory, out_path: str) -> None:
     if ltm.graph.number_of_edges() == 0:
         logging.warning("無邊可視化")
         return
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(14, 12))  # 放大圖像
     pos = nx.spring_layout(ltm.graph)
     weights = [abs(ltm.edge_params[f"{u}->{v}"].item()) for u, v in ltm.graph.edges]
-    nx.draw_networkx(ltm.graph, pos, width=weights, node_size=300, with_labels=True)
+    nx.draw_networkx(ltm.graph, pos, width=weights, node_size=800, with_labels=True, font_size=16)
     plt.tight_layout()
-    plt.savefig(out_path)
+    plt.savefig(out_path, dpi=200)  # 提高解析度
     plt.close()
     logging.info("邊權重圖已輸出至 %s", out_path)
 
@@ -89,7 +92,7 @@ def _path_gradient(
         logging.error("梯度計算失敗: %s", exc)
         return
     grad_map = {k: abs(g.item()) for k, g in zip(ltm.edge_params.keys(), grads)}
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(14, 12))  # 放大圖像
     pos = nx.spring_layout(ltm.graph)
     edges, colors = [], []
     for u, v in ltm.graph.edges:
@@ -97,11 +100,11 @@ def _path_gradient(
         edges.append((u, v))
         colors.append(grad_map.get(key, 0.0))
     nx.draw_networkx(
-        ltm.graph, pos, edgelist=edges, edge_color=colors, edge_cmap=plt.cm.RdBu, node_size=300
+        ltm.graph, pos, edgelist=edges, edge_color=colors, edge_cmap=plt.cm.RdBu, node_size=800, font_size=16
     )
     plt.colorbar(label="|∂Q/∂W|")
     plt.tight_layout()
-    plt.savefig(out_path)
+    plt.savefig(out_path, dpi=200)  # 提高解析度
     plt.close()
     logging.info("路徑梯度圖已輸出至 %s", out_path)
 

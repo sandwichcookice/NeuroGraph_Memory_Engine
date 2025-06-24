@@ -14,6 +14,10 @@ from memory_engine import (
 )
 from memory_engine.decision import DecisionInterface, ReadNet
 
+# 強制 stdout 為 UTF-8，確保所有 print() 都是 UTF-8 輸出，解決 Node.js 端亂碼問題
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 SNAPSHOT_PATH = "ltm_snapshot.pkl"
 
 # 初始化各模組
@@ -110,7 +114,7 @@ current_action = None
 inventory_snapshot = {}
 step_counter = 0
 sleep_cycle = 20
-visual_cycle = 10  # 每隔此步數輸出一次 STM 圖像
+visual_cycle = 1000  # 每隔此步數輸出一次 STM 圖像
 epsilon = 0.2
 
 # 將可微邊權重同步回圖結構，供路徑規劃使用

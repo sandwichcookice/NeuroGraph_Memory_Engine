@@ -11,8 +11,10 @@ class Consolidator:
 
     def run(self, stm: ShortTermMemory, ltm: LongTermMemory | GNNLongTermMemory):
         if isinstance(ltm, GNNLongTermMemory):
+            print("Consolidating STM into GNN LTM...")
             self._run_gnn(stm, ltm)
         else:
+            print("Consolidating STM into LTM...")
             ltm.consolidate(stm, self.beta)
             stm.decay_and_prune()
             ltm.decay_and_prune()

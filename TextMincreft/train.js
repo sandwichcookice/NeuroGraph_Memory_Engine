@@ -15,8 +15,9 @@ async function main() {
   const pyshell = new PythonShell(
     path.join(__dirname, '..', 'memory_engine', 'trainer.py'),
     {
-      pythonPath: path.join(__dirname, '..', 'macEnv', 'bin', 'python3'), // 修正 pythonPath 指向正確 venv
-      env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
+      pythonPath: path.join(__dirname, '..', 'winEnv', 'scripts', 'python'), // 修正 pythonPath 指向正確 venv
+      env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
+      encoding: 'utf8' // 新增，確保 Node.js 端正確解讀 Python 輸出
     }
   );
 
